@@ -25,7 +25,7 @@ extern crate env_logger;
 extern crate paho_mqtt as mqtt;
 extern crate mqtt_redis;
 
-use mqtt_redis::MemPersistence;
+use mqtt_redis::RedisPersistence;
 
 // --------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ fn main() {
 
 	println!("Connecting to MQTT broker.");
 	// Create a client & define connect options
-	let persistence = MemPersistence::new();
+	let persistence = RedisPersistence::new();
 
 	let create_opts = mqtt::CreateOptionsBuilder::new()
 			.server_uri("tcp://localhost:1883")
