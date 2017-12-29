@@ -15,7 +15,7 @@ The `Cargo.toml` file lists a local address for the project. This should be upda
 
 ## Rust Redis Client
 
-This library uses the "redis" crate v0.8 to communicate with the Redis server. It is listed as a dependency in the `Cargo.toml` file. The project's come page can be found at:
+This library uses the "redis" crate v0.8 to communicate with the Redis server. It is listed as a dependency in the `Cargo.toml` file. The project's home page can be found at:
 
 https://github.com/mitsuhiko/redis-rs
 
@@ -50,6 +50,7 @@ The bulk of this library is dedicated to the implementation of a `RedisPersisten
 ## The MQTT Rust Client
 
 Using the Redis persisence is fairly trivial. There's an example application, `redis_persist_pub.rs` demonstrating its use. Simply do the following:
+
 1. Create an instance of a `RedisPersistence`struct.
 2. Create an instance of an MQTT `CreateOptions` struct, specifying the RedisPersistence object as the user-defined persistence.
 3. Create an MQTT client, using the options.
