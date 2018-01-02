@@ -1,10 +1,11 @@
 [package]
 name = "mqtt-redis"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["fmp <fpagliughi@mindspring.com>"]
 
 [dependencies]
-paho-mqtt = { path = "/home/fmp/mqtt/paho-rust" }
+#paho-mqtt = { path = "/home/fmp/mqtt/paho-rust" }
+paho-mqtt = { git = "https://github.com/eclipse/paho.mqtt.rust" }
 redis = "0.8.0"
 log = "0.3"
 env_logger = "0.3"
