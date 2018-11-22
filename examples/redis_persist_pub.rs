@@ -43,10 +43,10 @@ extern crate log;
 extern crate env_logger;
 
 extern crate paho_mqtt as mqtt;
-extern crate mqtt_redis;
+extern crate paho_mqtt_redis;
 
 use std::process;
-use mqtt_redis::RedisPersistence;
+use paho_mqtt_redis::RedisPersistence;
 
 // Use non-zero QoS to exercise message persistence
 const QOS: i32 = 1;
