@@ -7,11 +7,17 @@ Typically messages are persisted to disk. On some smaller flash-based devices, s
 
 ## The Paho MQTT Rust Library
 
-The Paho MQTT Rust library is a new wrapper around the Paho C library. As of this time it is still unpublished and in an incubator state. The source repository lives on GitHub at:
+The Paho MQTT Rust library is a wrapper around the Paho C library. It can be included in a project via crates.io, with the package name `paho-mqtt`. Add this to the dependencies section of your _Cargo.toml_ file:
+
+```
+[dependencies]
+paho-mqtt = "0.4"
+```
+
+ The source repository lives on GitHub at:
 
 https://github.com/eclipse/paho.mqtt.rust
 
-The `Cargo.toml` file lists a local address for the project. This should be updated to wherever the Git repository is cloned on your local system.
 
 ## Rust Redis Client
 
@@ -27,16 +33,16 @@ The Paho Rust library contains a trait that can be used to supply a user-defined
 
 ```
 pub trait ClientPersistence {
-	fn open(&mut self, client_id: &str, server_uri: &str) -> MqttResult<()>;
-	fn close(&mut self) -> MqttResult<()>;
+    fn open(&mut self, client_id: &str, server_uri: &str) -> MqttResult<()>;
+    fn close(&mut self) -> MqttResult<()>;
 
-	fn put(&mut self, key: &str, buffers: Vec<&[u8]>) -> MqttResult<()>;
-	fn get(&self, key: &str) -> MqttResult<Vec<u8>>;
+    fn put(&mut self, key: &str, buffers: Vec<&[u8]>) -> MqttResult<()>;
+    fn get(&self, key: &str) -> MqttResult<Vec<u8>>;
 
-	fn remove(&mut self, key: &str) -> MqttResult<()>;
-	fn keys(&self) -> MqttResult<Vec<String>>;
-	fn clear(&mut self) -> MqttResult<()>; 
-	fn contains_key(&self, key: &str) -> bool;
+    fn remove(&mut self, key: &str) -> MqttResult<()>;
+    fn keys(&self) -> MqttResult<Vec<String>>;
+    fn clear(&mut self) -> MqttResult<()>; 
+    fn contains_key(&self, key: &str) -> bool;
 }
 
 ``` 
@@ -49,7 +55,9 @@ The bulk of this library is dedicated to the implementation of a `RedisPersisten
 
 ## The MQTT Rust Client
 
-Using the Redis persisence is fairly trivial. There's an example application, `redis_persist_pub.rs` demonstrating its use. Simply do the following:
+Using the Redis persisence is fairly trivial. There's an example application, `redis_persist_pub.rs` demonstrating its use in the [examples](https://github.com/fpagliughi/mqtt.rust.redis/tree/master/examples) folder.
+
+ Do the following:
 
 1. Create an instance of a `RedisPersistence`struct.
 2. Create an instance of an MQTT `CreateOptions` struct, specifying the RedisPersistence object as the user-defined persistence.

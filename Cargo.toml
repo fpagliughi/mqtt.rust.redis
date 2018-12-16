@@ -1,6 +1,6 @@
 [package]
 name = "paho-mqtt-redis"
-version = "0.2.1"
+version = "0.2.2"
 authors = ["Frank Pagliughi <fpagliughi@mindspring.com>"]
 homepage = "https://github.com/fpagliughi/mqtt.rust.redis"
 repository = "https://github.com/fpagliughi/mqtt.rust.redis"

@@ -1,16 +1,9 @@
-// lib.rs
+// mqtt.rust.redis/src/lib.rs
 // 
 // Main library source file for 'mqtt-redis'.
 //
-// This is a small example of using Redis as the persistence store for the
-// Paho MQTT Rust client. The library allows any object to act as a 
-// persistence store for messages and other data. The object just needs
-// to implement the 'ClientPersistence' trait to service callbacks from 
-// the library. These callbacks map to the operations on a key/value 
-// store, so Redis is a perfect candidate to act as a store.
-//
 // --------------------------------------------------------------------------
-// Copyright (c) 2017 Frank Pagliughi
+// Copyright (c) 2017-2018 Frank Pagliughi
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,6 +34,42 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 
+//! This is a small example of using Redis as the persistence store for the
+//! Paho MQTT Rust client.
+//!
+//! It is an add-on library for use with the Eclipse Paho Rust MQTT Client
+//!     https://github.com/eclipse/paho.mqtt.rust
+//!
+//! The MQTT client library provides several mechanisms to persist QoS 1 & 2
+//! messages while they are in transit. This helps to ensure that even if the
+//! client application crashes, upon restart those messages can be retrieved
+//! from the persistence store and re-sent to the server.
+//!
+//! The Paho library contains file/disk based persistence out-of-the-box.
+//! But it also allows the application to create a user-supplied persistence
+//! object and register that with the client. The object simply needs to
+//! implement the `paho_mqtt::ClientPersistence` trait. These callbacks map
+//! to the operations on a key/value store, so Redis is a perfect candidate
+//! to act as a store.
+//!
+//! The MQTT callbacks map nearly 1:1 to Redis Hash commands:
+//!      open()      -> conect
+//!      close()     -> disconnect
+//!
+//!      put()       -> HSET
+//!      get()       -> HGET
+//!      remove()    -> HDEL
+//!      keys()      -> HKEYS
+//!      clear()     -> DEL
+//!      contains_key() -> HEXISTS
+//!
+//! NOTE: Using Redis as an MQTT persistence store is an extremely viable
+//! solution in a production IoT device or gateway, but it really only makes
+//! sense to use it if the Redis server is running locally on the device
+//! and connected via localhost or a UNIX socket. It _does not make sense_ to
+//! use a remote Redis server for this purpose.
+//!
+
 #[macro_use]
 extern crate log;
 extern crate env_logger;
@@ -52,16 +81,25 @@ use redis::{Client, Commands, Connection, RedisResult /*, RedisError*/};
 
 // --------------------------------------------------------------------------
 
-// The ClientPersistence maps pretty closely to a key/val store. We can use
-// a Rust HashMap to implement an in-memory persistence pretty easily.
-
+/// The MQTT Redis persistence object.
+/// An instance of this stuct can be residtered with an MQTT client to hold
+/// messgaes in a Redis server until they are properly acknowledged by the
+/// remote MQTT server. An instance of this object maps to a single hash
+/// on a specific Redis server.
 pub struct RedisPersistence {
+    /// The name of the Redis hash object.
+    /// This is formed as a combination of the MQTT server name/address
+    /// and the client ID string.
 	name: String,
+    /// The Redis client
 	client: Client,
+    /// The connection to the Redis client.
+    /// This is opened and closed on instruction from the MQTT client.
 	conn: Option<Connection>,
 }
 
 impl RedisPersistence {
+    /// Create a new persistence object to connect to a local Redis server.
 	pub fn new() -> RedisPersistence {
 		RedisPersistence {
 			name: "".to_string(),
@@ -73,6 +111,7 @@ impl RedisPersistence {
 
 impl mqtt::ClientPersistence for RedisPersistence
 {
+    /// Opena the connection to the Redis client.
 	fn open(&mut self, client_id: &str, server_uri: &str) -> mqtt::MqttResult<()> {
 		self.name = format!("{}:{}", client_id, server_uri);
 
@@ -89,14 +128,16 @@ impl mqtt::ClientPersistence for RedisPersistence
 		}
 	}
 
+    /// Close the connection to the Redis client.
 	fn close(&mut self) -> mqtt::MqttResult<()> {
 		trace!("Client persistence [{}]: close", self.name);
 		self.conn = None;
 		Ok(())
 	}
 
-	// We get a vector of buffer references for the data to store, which we 
-	// can concatenate into a single byte buffer to place in the map.
+    /// Store a persistent value to Redis.
+	/// We get a vector of buffer references for the data to store, which we
+	/// can concatenate into a single byte buffer to send to the server.
 	fn put(&mut self, key: &str, buffers: Vec<&[u8]>) -> mqtt::MqttResult<()> {
 		trace!("Client persistence [{}]: put key '{}'", self.name, key);
 		let conn = self.conn.as_ref().unwrap();	// TODO: Check for error?
@@ -106,7 +147,9 @@ impl mqtt::ClientPersistence for RedisPersistence
 		Ok(())
 	}
 
-	// Get the data buffer for the requested key.
+	/// Get the data buffer for the requested key.
+    /// Although the value sent to the server was a collection of buffers,
+    /// we can return them as a single, concatenated buffer.
 	fn get(&self, key: &str) -> mqtt::MqttResult<Vec<u8>> {
 		trace!("Client persistence [{}]: get key '{}'", self.name, key);
 		let conn = self.conn.as_ref().unwrap();	// TODO: Check for error?
@@ -119,6 +162,7 @@ impl mqtt::ClientPersistence for RedisPersistence
 		}
 	}
 
+    /// Remove the value with the specified `key` from the store.
 	fn remove(&mut self, key: &str) -> mqtt::MqttResult<()> {
 		trace!("Client persistence [{}]: remove key '{}'", self.name, key);
 		let conn = self.conn.as_ref().unwrap();	// TODO: Check for error?
@@ -135,6 +179,7 @@ impl mqtt::ClientPersistence for RedisPersistence
 		Err(mqtt::PERSISTENCE_ERROR)
 	}
 
+    /// Return a collection of all the keys in the store for this client.
 	fn keys(&self) -> mqtt::MqttResult<Vec<String>> {
 		trace!("Client persistence [{}]: keys", self.name);
 		let conn = self.conn.as_ref().unwrap();	// TODO: Check for error?
@@ -148,6 +193,7 @@ impl mqtt::ClientPersistence for RedisPersistence
 		}
 	}
 
+    /// Remove all the data for this client from the store.
 	fn clear(&mut self) -> mqtt::MqttResult<()> {
 		trace!("Client persistence [{}]: clear", self.name);
 		let conn = self.conn.as_ref().unwrap();	// TODO: Check for error?
@@ -159,6 +205,7 @@ impl mqtt::ClientPersistence for RedisPersistence
 		Err(mqtt::PERSISTENCE_ERROR)
 	}
 
+    /// Determines if the store for this client contains the specified `key`.
 	fn contains_key(&self, key: &str) -> bool {
 		trace!("Client persistence [{}]: contains key '{}'", self.name, key);
 		let conn = self.conn.as_ref().unwrap();	// TODO: Check for error?

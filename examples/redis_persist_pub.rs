@@ -45,7 +45,7 @@ extern crate env_logger;
 extern crate paho_mqtt as mqtt;
 extern crate paho_mqtt_redis;
 
-use std::process;
+use std::{env, process};
 use paho_mqtt_redis::RedisPersistence;
 
 // Use non-zero QoS to exercise message persistence
@@ -56,12 +56,17 @@ const QOS: i32 = 1;
 fn main() {
 	env_logger::init().unwrap();
 
-	println!("Creating the MQTT client");
+    let host = env::args().skip(1).next().unwrap_or(
+        "tcp://localhost:1883".to_string()
+    );
+
+	println!("Connecting to MQTT server at: '{}'", host);
 	// Create a client & define connect options
 	let persistence = RedisPersistence::new();
 
 	let create_opts = mqtt::CreateOptionsBuilder::new()
-			.server_uri("tcp://localhost:1883")
+			.server_uri(host)
+			.client_id("rust_redis_pub")
 			.user_persistence(persistence)
 			.finalize();
 
