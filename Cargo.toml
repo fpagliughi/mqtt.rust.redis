@@ -1,6 +1,7 @@
 [package]
 name = "paho-mqtt-redis"
-version = "0.2.2"
+version = "0.3.0"
+edition = "2018"
 authors = ["Frank Pagliughi <fpagliughi@mindspring.com>"]
 homepage = "https://github.com/fpagliughi/mqtt.rust.redis"
 repository = "https://github.com/fpagliughi/mqtt.rust.redis"
@@ -12,9 +13,9 @@ Redis as the backing store.
 """
 
 [dependencies]
-#paho-mqtt = { git = "https://github.com/eclipse/paho.mqtt.rust" }
-paho-mqtt = "0.4"
-redis = "0.8.0"
+paho-mqtt = { git = "https://github.com/eclipse/paho.mqtt.rust", branch="develop" }
+#paho-mqtt = "0.8"
+redis = "0.17"
 log = "0.3"
 env_logger = "0.3"
 
