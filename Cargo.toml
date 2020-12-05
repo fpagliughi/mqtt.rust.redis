@@ -9,12 +9,12 @@ keywords = [ "MQTT", "IoT", "Paho", "persistence" ]
 license = "BSD-3-Clause"
 description = """
 A library for providing persistence to a Paho MQTT Rust client using 
-Redis as the backing store.
+a local instance of Redis as the backing store.
 """
 
 [dependencies]
 paho-mqtt = { git = "https://github.com/eclipse/paho.mqtt.rust", branch="develop" }
-#paho-mqtt = "0.8"
+#paho-mqtt = "0.9"
 redis = "0.17"
 log = "0.3"
 env_logger = "0.3"

@@ -1,9 +1,13 @@
 # mqtt-redis
-A library to use Redis as the persistence store for Paho Rust MQTT clients.
+A library to use Redis as the persistence store for Paho MQTT Rust clients.
 
 MQTT is a light-weight, distributed, messaging system particularly tailored for devices that have unreliable network connections. Part of the way it achieves a higher quality of service is that clients can use a persistence store to keep messages tha are in-flight until they are confirmed as received by the remote system. This way, even if the client application crashes and restarts, the messages can be confirmed or re-sent.
 
-Typically messages are persisted to disk. On some smaller flash-based devices, such as Embedded Linux systems, this might not be the most efficient means to store the messages. A Redis server, running on the client device can serve as a convenient store for messages.
+Typically messages are persisted to disk. On some smaller flash-based devices such as Embedded Linux systems, this might not be the most efficient means to store the messages, as continuous writes could wear out the flash chips prematurely. 
+
+A Redis server, running on the client device can serve as a convenient store for messages. The Paho library's user-defined persistence mechanism uses key/value access which maps perfectly to any similar API, such as Redis. Using it in this context takes less than 100 lines of code.
+
+Note that this only applies to a **local** Redis server running on the same host as the MQTT client application. It wouldn't make sense to try to persist messages across the network as that would introduce network problems and latency at the persistence level. But a local Redis service has proven to work well in production.
 
 ## The Paho MQTT Rust Library
 
@@ -11,7 +15,7 @@ The Paho MQTT Rust library is a wrapper around the Paho C library. It can be inc
 
 ```
 [dependencies]
-paho-mqtt = "0.4"
+paho-mqtt = "0.9"
 ```
 
  The source repository lives on GitHub at:
@@ -21,7 +25,7 @@ https://github.com/eclipse/paho.mqtt.rust
 
 ## Rust Redis Client
 
-This library uses the "redis" crate v0.8 to communicate with the Redis server. It is listed as a dependency in the `Cargo.toml` file. The project's home page can be found at:
+This library uses the "redis" crate to communicate with the Redis server. It is listed as a dependency in the `Cargo.toml` file. The project's home page can be found at:
 
 https://github.com/mitsuhiko/redis-rs
 
@@ -37,12 +41,12 @@ pub trait ClientPersistence {
     fn close(&mut self) -> MqttResult<()>;
 
     fn put(&mut self, key: &str, buffers: Vec<&[u8]>) -> MqttResult<()>;
-    fn get(&self, key: &str) -> MqttResult<Vec<u8>>;
+    fn get(&mut self, key: &str) -> MqttResult<Vec<u8>>;
 
     fn remove(&mut self, key: &str) -> MqttResult<()>;
-    fn keys(&self) -> MqttResult<Vec<String>>;
+    fn keys(&mut self) -> MqttResult<Vec<String>>;
     fn clear(&mut self) -> MqttResult<()>; 
-    fn contains_key(&self, key: &str) -> bool;
+    fn contains_key(&mut self, key: &str) -> bool;
 }
 
 ``` 
@@ -67,12 +71,12 @@ It can be done like this:
 ```
 let persistence = RedisPersistence::new();
 
-let create_opts = mqtt::CreateOptionsBuilder::new()
-                     .server_uri("tcp://localhost:1883")
-                     .user_persistence(persistence)
-                     .finalize();
+let opts = mqtt::CreateOptionsBuilder::new()
+                   .server_uri("tcp://localhost:1883")
+                   .user_persistence(persistence)
+                   .finalize();
 
-let cli = mqtt::AsyncClient::new(create_opts).unwrap_or_else(|e| {
+let cli = mqtt::AsyncClient::new(opts).unwrap_or_else(|e| {
     println!("Error creating the client: {:?}", e);
     process::exit(1);
 });

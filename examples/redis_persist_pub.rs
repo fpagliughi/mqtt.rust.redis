@@ -99,4 +99,7 @@ fn main() {
 	tok.wait().unwrap();
 
 	println!("Done");
+
+    drop(cli);
+    println!("Exiting");
 }

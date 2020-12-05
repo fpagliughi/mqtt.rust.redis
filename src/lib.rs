@@ -77,7 +77,7 @@ extern crate redis;
 
 extern crate paho_mqtt as mqtt;
 
-use redis::{Client, Commands, Connection, RedisResult /*, RedisError*/};
+use redis::{Client, Commands, Connection, RedisResult };
 
 // --------------------------------------------------------------------------
 
@@ -131,7 +131,10 @@ impl mqtt::ClientPersistence for RedisPersistence
     /// Close the connection to the Redis client.
     fn close(&mut self) -> mqtt::Result<()> {
         trace!("Client persistence [{}]: close", self.name);
-        self.conn = None;
+        if let Some(conn) = self.conn.take() {
+            drop(conn);
+        }
+        trace!("Redis close complete");
         Ok(())
     }
 
