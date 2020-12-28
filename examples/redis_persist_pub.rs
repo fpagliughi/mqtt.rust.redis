@@ -3,12 +3,12 @@
 // Example/test for mqtt-redis.
 // 
 // This shows how to to use mqtt-redis with the Paho MQTT Rust library
-// in order to have Redis serve ss the persistence store for the messaging
-// application.
+// in order to have a local Redis server as the persistence store for the
+// messaging application.
 //
 
 // --------------------------------------------------------------------------
-// Copyright (c) 2017 Frank Pagliughi
+// Copyright (c) 2017-2020 Frank Pagliughi <fpagliughi@mindspring.com>
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -39,28 +39,23 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 
-extern crate log;
-extern crate env_logger;
-
-extern crate paho_mqtt as mqtt;
-extern crate paho_mqtt_redis;
-
 use std::{env, process};
-use paho_mqtt_redis::RedisPersistence;
 
-// Use non-zero QoS to exercise message persistence
-const QOS: i32 = 1;
+use paho_mqtt as mqtt;
+use paho_mqtt_redis::RedisPersistence;
 
 // --------------------------------------------------------------------------
 
 fn main() {
-	env_logger::init().unwrap();
+    // Use the environment logger for this example.
+	env_logger::init();
 
     let host = env::args().skip(1).next().unwrap_or(
         "tcp://localhost:1883".to_string()
     );
 
-	println!("Connecting to MQTT server at: '{}'", host);
+	println!("Connecting to MQTT broker at: '{}'", host);
+
 	// Create a client & define connect options
 	let persistence = RedisPersistence::new();
 
@@ -70,22 +65,27 @@ fn main() {
 			.user_persistence(persistence)
 			.finalize();
 
-	let cli = mqtt::AsyncClient::new(create_opts).unwrap_or_else(|e| {
-		println!("Error creating the client: {:?}", e);
-		process::exit(1);
+	let cli = mqtt::AsyncClient::new(create_opts).unwrap_or_else(|err| {
+        match err {
+            mqtt::Error::Paho(-2 /*mqtt::PERSISTENCE_ERROR*/) =>
+                eprintln!("Error connecting to the local Redis server. Is it running?"),
+            _ =>
+                eprintln!("Error creating the client: {:?}", err)
+        };
+		process::exit(2);
 	});
 
 	// Connect and wait for it to complete or fail
-	println!("Connecting to MQTT broker.");
-
 	if let Err(e) = cli.connect(None).wait() {
 		println!("Unable to connect: {:?}", e);
 		process::exit(1);
 	}
 
 	// Create a message and publish it
+    // Use non-zero QoS to exercise message persistence
 	println!("Publishing a message to 'test' topic");
-	let msg = mqtt::Message::new("test", "Hello world!", QOS);
+
+    let msg = mqtt::Message::new("test", "Hello world!", mqtt::QOS_1);
 	let tok = cli.publish(msg);
 
 	if let Err(e) = tok.wait() {

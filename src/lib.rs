@@ -3,7 +3,7 @@
 // Main library source file for 'mqtt-redis'.
 //
 // --------------------------------------------------------------------------
-// Copyright (c) 2017-2018 Frank Pagliughi
+// Copyright (c) 2017-2020 Frank Pagliughi <fpagliughi@mindspring.com>
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,12 +45,20 @@
 //! client application crashes, upon restart those messages can be retrieved
 //! from the persistence store and re-sent to the server.
 //!
-//! The Paho library contains file/disk based persistence out-of-the-box.
-//! But it also allows the application to create a user-supplied persistence
-//! object and register that with the client. The object simply needs to
-//! implement the `paho_mqtt::ClientPersistence` trait. These callbacks map
-//! to the operations on a key/value store, so Redis is a perfect candidate
-//! to act as a store.
+//! The Paho library contains file/disk based persistence out of the box.
+//! That is very useful, but on a Flash-based Embedded device, like an IoT
+//! gateway, but continuous writes to the flash chip will wear it out
+//! prematurely.
+//!
+//! So it would be nice to use a RAM-based cache that is outside the client
+//! application's process. An instance of Redis, running locally, is a
+//! nice solution.
+//!
+//! The Paho library allows the application to create a user-supplied
+//! persistence object and register that with the client. The object simply
+//! needs to implement the `paho_mqtt::ClientPersistence` trait. These
+//! callbacks map to the operations on a key/value store, so Redis is a
+//! perfect candidate to match the persistence API and act as a store.
 //!
 //! The MQTT callbacks map nearly 1:1 to Redis Hash commands:
 //!      open()      -> conect
@@ -70,13 +78,9 @@
 //! use a remote Redis server for this purpose.
 //!
 
-#[macro_use]
-extern crate log;
-extern crate env_logger;
-extern crate redis;
+#[macro_use] extern crate log;
 
-extern crate paho_mqtt as mqtt;
-
+use paho_mqtt as mqtt;
 use redis::{Client, Commands, Connection, RedisResult };
 
 // --------------------------------------------------------------------------
@@ -100,8 +104,14 @@ pub struct RedisPersistence {
 
 impl RedisPersistence {
     /// Create a new persistence object to connect to a local Redis server.
-    pub fn new() -> RedisPersistence {
-        RedisPersistence {
+    pub fn new() -> Self { Self::default() }
+}
+
+impl Default for RedisPersistence {
+    /// Create a new persistence object to connect to the Redis server
+    /// on localhost.
+    fn default() -> Self {
+        Self {
             name: "".to_string(),
             client: Client::open("redis://localhost/").unwrap(),
             conn: None,
@@ -223,11 +233,3 @@ impl mqtt::ClientPersistence for RedisPersistence
     }
 }
 
-/////////////////////////////////////////////////////////////////////////////
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-    }
-}

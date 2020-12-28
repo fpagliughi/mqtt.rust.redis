@@ -1,13 +1,15 @@
-# mqtt-redis
+# Rust MQTT Redis Persistence Store
+# _paho-mqtt-redis_
+
 A library to use Redis as the persistence store for Paho MQTT Rust clients.
 
 MQTT is a light-weight, distributed, messaging system particularly tailored for devices that have unreliable network connections. Part of the way it achieves a higher quality of service is that clients can use a persistence store to keep messages tha are in-flight until they are confirmed as received by the remote system. This way, even if the client application crashes and restarts, the messages can be confirmed or re-sent.
 
-Typically messages are persisted to disk. On some smaller flash-based devices such as Embedded Linux systems, this might not be the most efficient means to store the messages, as continuous writes could wear out the flash chips prematurely. 
+Typically, when using persistence, messages are saved to disk. On some smaller flash-based devices such as Embedded Linux systems, this might not be the most efficient means to store the messages, as continuous writes could wear out the flash chips prematurely. 
 
-A Redis server, running on the client device can serve as a convenient store for messages. The Paho library's user-defined persistence mechanism uses key/value access which maps perfectly to any similar API, such as Redis. Using it in this context takes less than 100 lines of code.
+A Redis server, running on the local client device can serve as a convenient store for messages. The Paho library's user-defined persistence mechanism uses key/value access which maps perfectly to any similar API such as Redis. Using it in this context takes less than 100 lines of code.
 
-Note that this only applies to a **local** Redis server running on the same host as the MQTT client application. It wouldn't make sense to try to persist messages across the network as that would introduce network problems and latency at the persistence level. But a local Redis service has proven to work well in production.
+Note that this only applies to a **local** Redis server running on the same host as the MQTT client application. It would not make sense to try to persist messages across the network as that would introduce network problems and latency at the persistence level. But a local Redis service has proven to work well in production.
 
 ## The Paho MQTT Rust Library
 
@@ -16,6 +18,7 @@ The Paho MQTT Rust library is a wrapper around the Paho C library. It can be inc
 ```
 [dependencies]
 paho-mqtt = "0.9"
+paho-mqtt-redis = "0.3"
 ```
 
  The source repository lives on GitHub at:
