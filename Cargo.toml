@@ -13,8 +13,8 @@ a local instance of Redis as the backing store.
 """
 
 [dependencies]
-#paho-mqtt = "0.9"
-paho-mqtt = { git = "https://github.com/eclipse/paho.mqtt.rust", branch="master" }
+paho-mqtt = "0.9"
+#paho-mqtt = { git = "https://github.com/eclipse/paho.mqtt.rust", branch="master" }
 redis = "0.19"
 log = "0.4"
 
