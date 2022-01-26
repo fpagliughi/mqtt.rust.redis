@@ -38,7 +38,7 @@
 //! Paho MQTT Rust client.
 //!
 //! It is an add-on library for use with the Eclipse Paho Rust MQTT Client
-//!     https://github.com/eclipse/paho.mqtt.rust
+//!     <https://github.com/eclipse/paho.mqtt.rust>
 //!
 //! The MQTT client library provides several mechanisms to persist QoS 1 & 2
 //! messages while they are in transit. This helps to ensure that even if the
@@ -61,6 +61,8 @@
 //! perfect candidate to match the persistence API and act as a store.
 //!
 //! The MQTT callbacks map nearly 1:1 to Redis Hash commands:
+//!
+//! ```ignore
 //!      open()      -> conect
 //!      close()     -> disconnect
 //!
@@ -70,6 +72,7 @@
 //!      keys()      -> HKEYS
 //!      clear()     -> DEL
 //!      contains_key() -> HEXISTS
+//!```
 //!
 //! NOTE: Using Redis as an MQTT persistence store is an extremely viable
 //! solution in a production IoT device or gateway, but it really only makes
