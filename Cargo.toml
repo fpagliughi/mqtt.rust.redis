@@ -1,7 +1,8 @@
 [package]
 name = "paho-mqtt-redis"
-version = "0.3.1"
-edition = "2018"
+version = "0.3.2"
+edition = "2021"
+rust_version = "1.63.0"
 authors = ["Frank Pagliughi <fpagliughi@mindspring.com>"]
 homepage = "https://github.com/fpagliughi/mqtt.rust.redis"
 repository = "https://github.com/fpagliughi/mqtt.rust.redis"
@@ -13,10 +14,10 @@ a local instance of Redis as the backing store.
 """
 
 [dependencies]
-paho-mqtt = "0.10"
-redis = "0.21"
+paho-mqtt = "0.12"
+redis = "0.23"
 log = "0.4"
 
 [dev-dependencies]
-env_logger = "0.9"
+env_logger = "0.10"
 

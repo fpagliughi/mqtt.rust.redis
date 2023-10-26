@@ -1,9 +1,9 @@
 // mqtt.rust.redis/src/lib.rs
-// 
+//
 // Main library source file for 'mqtt-redis'.
 //
 // --------------------------------------------------------------------------
-// Copyright (c) 2017-2020 Frank Pagliughi <fpagliughi@mindspring.com>
+// Copyright (c) 2017-2023 Frank Pagliughi <fpagliughi@mindspring.com>
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 // LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 
 //! This is a small example of using Redis as the persistence store for the
 //! Paho MQTT Rust client.
@@ -81,10 +81,11 @@
 //! use a remote Redis server for this purpose.
 //!
 
-#[macro_use] extern crate log;
+#[macro_use]
+extern crate log;
 
 use paho_mqtt as mqtt;
-use redis::{Client, Commands, Connection, RedisResult };
+use redis::{Client, Commands, Connection, RedisResult};
 
 // --------------------------------------------------------------------------
 
@@ -107,7 +108,9 @@ pub struct RedisPersistence {
 
 impl RedisPersistence {
     /// Create a new persistence object to connect to a local Redis server.
-    pub fn new() -> Self { Self::default() }
+    pub fn new() -> Self {
+        Self::default()
+    }
 }
 
 impl Default for RedisPersistence {
@@ -122,8 +125,7 @@ impl Default for RedisPersistence {
     }
 }
 
-impl mqtt::ClientPersistence for RedisPersistence
-{
+impl mqtt::ClientPersistence for RedisPersistence {
     /// Opena the connection to the Redis client.
     fn open(&mut self, client_id: &str, server_uri: &str) -> mqtt::Result<()> {
         self.name = format!("{}:{}", client_id, server_uri);
@@ -136,7 +138,7 @@ impl mqtt::ClientPersistence for RedisPersistence
             }
             Err(e) => {
                 warn!("Redis persistence connect error: {:?}", e);
-                return Err(mqtt::PersistenceError)?
+                Err(mqtt::PersistenceError)
             }
         }
     }
@@ -159,7 +161,11 @@ impl mqtt::ClientPersistence for RedisPersistence
         let conn = self.conn.as_mut().ok_or(mqtt::PersistenceError)?;
         let buf: Vec<u8> = buffers.concat();
         debug!("Putting key '{}' with {} bytes", key, buf.len());
-        redis::cmd("HSET").arg(&self.name).arg(key).arg(buf).execute(conn);
+        redis::cmd("HSET")
+            .arg(&self.name)
+            .arg(key)
+            .arg(buf)
+            .execute(conn);
         Ok(())
     }
 
@@ -172,8 +178,7 @@ impl mqtt::ClientPersistence for RedisPersistence
         if let Ok(v) = conn.hget(&self.name, key) as RedisResult<Vec<u8>> {
             debug!("Found key {} with {} bytes", key, v.len());
             Ok(v)
-        }
-        else {
+        } else {
             Err(mqtt::PersistenceError)
         }
     }
@@ -185,8 +190,7 @@ impl mqtt::ClientPersistence for RedisPersistence
         if let Ok(res) = conn.hdel(&self.name, key) as RedisResult<usize> {
             if res != 0 {
                 debug!("Removed key: {}", key);
-            }
-            else {
+            } else {
                 debug!("Key not found (assuming OK): {}", key);
             }
             // Either way, if key is not in the store we report success.
@@ -202,8 +206,7 @@ impl mqtt::ClientPersistence for RedisPersistence
         if let Ok(v) = conn.hkeys(&self.name) as RedisResult<Vec<String>> {
             debug!("Found keys: {:?}", v);
             Ok(v)
-        }
-        else {
+        } else {
             warn!("Error looking for keys");
             Err(mqtt::PersistenceError)
         }
@@ -231,8 +234,8 @@ impl mqtt::ClientPersistence for RedisPersistence
         if let Ok(res) = conn.hexists(&self.name, key) as RedisResult<usize> {
             debug!("'contains' query returned: {:?}", res);
             res != 0
+        } else {
+            false
         }
-        else { false }
     }
 }
-

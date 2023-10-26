@@ -17,7 +17,7 @@ The Paho MQTT Rust library is a wrapper around the Paho C library. It can be inc
 
 ```
 [dependencies]
-paho-mqtt = "0.9"
+paho-mqtt = "0.12"
 paho-mqtt-redis = "0.3"
 ```
 
@@ -75,9 +75,9 @@ It can be done like this:
 let persistence = RedisPersistence::new();
 
 let opts = mqtt::CreateOptionsBuilder::new()
-                   .server_uri("tcp://localhost:1883")
-                   .user_persistence(persistence)
-                   .finalize();
+    .server_uri("tcp://localhost:1883")
+    .user_persistence(persistence)
+    .finalize();
 
 let cli = mqtt::AsyncClient::new(opts).unwrap_or_else(|e| {
     println!("Error creating the client: {:?}", e);
